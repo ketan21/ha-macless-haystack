@@ -380,7 +380,8 @@ class MaclessHaystackConfigFlow(ConfigFlow, domain=DOMAIN):
                 return {"base": "unknown"}
         try:
             await self._account.login(self._apple_id, password)
-        except InvalidCredentialsError:
+        except InvalidCredentialsError as err:
+            _LOGGER.warning("Apple refused the login: %s", err)
             return {"base": "invalid_auth"}
         except (aiohttp.ClientError, TimeoutError, OSError):
             return {"base": "cannot_connect"}

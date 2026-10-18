@@ -57,7 +57,7 @@
     },
     "error": {
       "cannot_connect": "Cannot reach the server.",
-      "invalid_auth": "Wrong Apple ID or password.",
+      "invalid_auth": "Apple refused the login. Check the Apple ID and the password. See the log for the exact reason from Apple.",
       "invalid_2fa": "Wrong or expired verification code.",
       "invalid_accessory": "The accessory JSON is not valid.",
       "no_2fa_methods": "Apple did not offer a second factor.",
