@@ -1,0 +1,41 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to macless-haystack",
+        "description": "Set the address of the macless-haystack endpoint. Add the user name and password when the endpoint has basic authentication.",
+        "data": {
+          "endpoint": "Endpoint URL",
+          "auth_user": "User name",
+          "auth_pass": "Password"
+        }
+      },
+      "accessory": {
+        "title": "Add accessory",
+        "description": "Paste the accessory JSON. You can export the file from the Accessories page of the macless-haystack web portal.",
+        "data": {
+          "accessories": "Accessory JSON"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot reach the endpoint.",
+      "invalid_auth": "Wrong user name or password.",
+      "invalid_accessory": "The accessory JSON is not valid."
+    },
+    "abort": {
+      "already_configured": "This accessory is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Macless Haystack options",
+        "data": {
+          "scan_interval": "Update interval",
+          "days": "Report window in days"
+        }
+      }
+    }
+  }
+}
