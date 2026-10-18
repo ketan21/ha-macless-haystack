@@ -93,6 +93,6 @@ def decode_reports(
         if result is None:
             continue
         result["hashed_key"] = key_id
-        result["gateway_confidence"] = report.get("confidence")
+        result["confidence"] = report.get("confidence")
         decoded.append(result)
     return decoded

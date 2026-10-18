@@ -2,12 +2,41 @@
   "config": {
     "step": {
       "user": {
-        "title": "Connect to macless-haystack",
+        "title": "Macless Haystack",
+        "description": "Choose how the integration gets the FindMy reports.",
+        "data": {
+          "mode": "Mode"
+        }
+      },
+      "endpoint": {
+        "title": "macless-haystack endpoint",
         "description": "Set the address of the macless-haystack endpoint. Add the user name and password when the endpoint has basic authentication.",
         "data": {
           "endpoint": "Endpoint URL",
           "auth_user": "User name",
           "auth_pass": "Password"
+        }
+      },
+      "apple": {
+        "title": "Apple ID",
+        "description": "Enter your Apple ID. The integration logs in one time and keeps the session. The password is not stored.",
+        "data": {
+          "apple_id": "Apple ID",
+          "password": "Password"
+        }
+      },
+      "two_factor": {
+        "title": "Second factor",
+        "description": "Choose how Apple sends the verification code.",
+        "data": {
+          "method": "Method"
+        }
+      },
+      "two_factor_code": {
+        "title": "Verification code",
+        "description": "Enter the code from Apple.",
+        "data": {
+          "code": "Code"
         }
       },
       "accessory": {
@@ -16,15 +45,28 @@
         "data": {
           "accessories": "Accessory JSON"
         }
+      },
+      "reauth_confirm": {
+        "title": "Apple ID",
+        "description": "The Apple ID session expired. Enter the password again.",
+        "data": {
+          "apple_id": "Apple ID",
+          "password": "Password"
+        }
       }
     },
     "error": {
-      "cannot_connect": "Cannot reach the endpoint.",
-      "invalid_auth": "Wrong user name or password.",
-      "invalid_accessory": "The accessory JSON is not valid."
+      "cannot_connect": "Cannot reach the server.",
+      "invalid_auth": "Wrong Apple ID or password.",
+      "invalid_2fa": "Wrong or expired verification code.",
+      "invalid_accessory": "The accessory JSON is not valid.",
+      "no_2fa_methods": "Apple did not offer a second factor.",
+      "unknown": "Unexpected error. See the log for details."
     },
     "abort": {
-      "already_configured": "This accessory is already configured."
+      "already_configured": "This accessory is already configured.",
+      "login_failed": "The Apple ID login failed. Start again.",
+      "reauth_successful": "The Apple ID session is new."
     }
   },
   "options": {

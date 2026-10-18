@@ -8,13 +8,13 @@ from homeassistant.components.device_tracker import TrackerEntity
 from homeassistant.core import callback
 
 from .const import BATTERY_STATUS
-from .coordinator import MaclessHaystackCoordinator
+from .coordinator import BaseMaclessHaystackCoordinator
 from .entity import MaclessHaystackEntity
 
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up the tracker entities."""
-    coordinator: MaclessHaystackCoordinator = entry.runtime_data
+    coordinator: BaseMaclessHaystackCoordinator = entry.runtime_data
     async_add_entities(
         MaclessDeviceTracker(coordinator, accessory)
         for accessory in coordinator.accessories
@@ -28,7 +28,7 @@ class MaclessDeviceTracker(MaclessHaystackEntity, TrackerEntity):
     _attr_name = None
 
     def __init__(
-        self, coordinator: MaclessHaystackCoordinator, accessory: dict[str, Any]
+        self, coordinator: BaseMaclessHaystackCoordinator, accessory: dict[str, Any]
     ) -> None:
         super().__init__(coordinator, accessory)
         self._attr_unique_id = f"{self._accessory_id}_tracker"

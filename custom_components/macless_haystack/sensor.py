@@ -12,13 +12,13 @@ from homeassistant.components.sensor import (
 from homeassistant.const import PERCENTAGE, UnitOfLength
 
 from .const import BATTERY_PERCENT, BATTERY_STATUS
-from .coordinator import MaclessHaystackCoordinator
+from .coordinator import BaseMaclessHaystackCoordinator
 from .entity import MaclessHaystackEntity
 
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
     """Set up the sensor entities."""
-    coordinator: MaclessHaystackCoordinator = entry.runtime_data
+    coordinator: BaseMaclessHaystackCoordinator = entry.runtime_data
     entities: list[MaclessHaystackEntity] = []
     for accessory in coordinator.accessories:
         entities.extend(

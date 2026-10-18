@@ -8,17 +8,17 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import AccessoryState, MaclessHaystackCoordinator
+from .coordinator import AccessoryState, BaseMaclessHaystackCoordinator
 from .crypto import accessory_unique_id
 
 
-class MaclessHaystackEntity(CoordinatorEntity[MaclessHaystackCoordinator]):
+class MaclessHaystackEntity(CoordinatorEntity[BaseMaclessHaystackCoordinator]):
     """Entity for one accessory."""
 
     _attr_has_entity_name = True
 
     def __init__(
-        self, coordinator: MaclessHaystackCoordinator, accessory: dict[str, Any]
+        self, coordinator: BaseMaclessHaystackCoordinator, accessory: dict[str, Any]
     ) -> None:
         super().__init__(coordinator)
         self._accessory_id = accessory_unique_id(accessory)

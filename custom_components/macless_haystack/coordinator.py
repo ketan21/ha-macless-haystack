@@ -1,4 +1,4 @@
-"""Poll the macless-haystack endpoint and decrypt the reports."""
+"""Data update coordinators for the Macless Haystack integration."""
 
 from __future__ import annotations
 
@@ -46,25 +46,16 @@ class AccessoryState:
     last_seen: datetime | None = None
 
 
-class MaclessHaystackCoordinator(DataUpdateCoordinator[dict[str, AccessoryState]]):
-    """Poll the local endpoint and merge the reports of all keys."""
+class BaseMaclessHaystackCoordinator(DataUpdateCoordinator[dict[str, AccessoryState]]):
+    """Base class for the endpoint and the Apple account coordinators."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        self.endpoint = entry.data[CONF_ENDPOINT].rstrip("/")
         self.accessories: list[dict[str, Any]] = json.loads(entry.data[CONF_ACCESSORIES])
-
-        self._key_map: dict[str, str] = {}
         self._key_to_accessory: dict[str, str] = {}
         for accessory in self.accessories:
             unique_id = accessory_unique_id(accessory)
-            for key_id, private_key in accessory_keys(accessory).items():
-                self._key_map[key_id] = private_key
+            for key_id in accessory_keys(accessory):
                 self._key_to_accessory[key_id] = unique_id
-
-        user = entry.data.get(CONF_AUTH_USER)
-        password = entry.data.get(CONF_AUTH_PASS)
-        self._auth = aiohttp.BasicAuth(user, password) if user else None
-        self._days = entry.options.get(CONF_DAYS, DEFAULT_DAYS)
 
         super().__init__(
             hass,
@@ -76,42 +67,16 @@ class MaclessHaystackCoordinator(DataUpdateCoordinator[dict[str, AccessoryState]
             config_entry=entry,
         )
 
-    async def _async_update_data(self) -> dict[str, AccessoryState]:
-        try:
-            reports = await self._async_fetch()
-        except Exception as err:  # noqa: BLE001 - keep the last position on any error
-            if self.data:
-                _LOGGER.warning("Could not update reports: %s", err)
-                return self.data
-            raise UpdateFailed(f"Could not reach {self.endpoint}: {err}") from err
-
-        decoded = await self.hass.async_add_executor_job(
-            decode_reports, reports, self._key_map
-        )
-        return self._build_states(decoded)
-
-    async def _async_fetch(self) -> list[dict[str, Any]]:
-        session = async_get_clientsession(self.hass)
-        async with session.post(
-            self.endpoint,
-            json={"ids": list(self._key_map), "days": self._days},
-            auth=self._auth,
-            timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
-        ) as response:
-            response.raise_for_status()
-            body = await response.json(content_type=None)
-        results = body.get("results")
-        return results if isinstance(results, list) else []
-
-    def _build_states(
-        self, reports: list[dict[str, Any]]
-    ) -> dict[str, AccessoryState]:
+    def _merge_reports(self, reports: list[dict[str, Any]]) -> dict[str, AccessoryState]:
+        """Merge the newest report of each key into the accessory states."""
         states: dict[str, AccessoryState] = {}
         for accessory in self.accessories:
             unique_id = accessory_unique_id(accessory)
             old = self.data.get(unique_id) if self.data else None
             states[unique_id] = (
-                replace(old) if old is not None else AccessoryState(name=accessory["name"])
+                replace(old)
+                if old is not None
+                else AccessoryState(name=accessory["name"])
             )
 
         for report in reports:
@@ -127,7 +92,52 @@ class MaclessHaystackCoordinator(DataUpdateCoordinator[dict[str, AccessoryState]
             state.accuracy = report["accuracy"]
             state.battery = report["battery"]
             state.status = report["status"]
-            state.confidence = report["gateway_confidence"]
-            state.last_seen = datetime.fromtimestamp(report["timestamp"], tz=timezone.utc)
+            state.confidence = report["confidence"]
+            state.last_seen = datetime.fromtimestamp(
+                report["timestamp"], tz=timezone.utc
+            )
 
         return states
+
+
+class EndpointCoordinator(BaseMaclessHaystackCoordinator):
+    """Poll a macless-haystack endpoint and decrypt the reports."""
+
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        super().__init__(hass, entry)
+        self.endpoint = entry.data[CONF_ENDPOINT].rstrip("/")
+        user = entry.data.get(CONF_AUTH_USER)
+        password = entry.data.get(CONF_AUTH_PASS)
+        self._auth = aiohttp.BasicAuth(user, password) if user else None
+        self._days = entry.options.get(CONF_DAYS, DEFAULT_DAYS)
+
+        self._key_map: dict[str, str] = {}
+        for accessory in self.accessories:
+            self._key_map.update(accessory_keys(accessory))
+
+    async def _async_update_data(self) -> dict[str, AccessoryState]:
+        try:
+            reports = await self._async_fetch()
+        except Exception as err:  # noqa: BLE001 - keep the last position on any error
+            if self.data:
+                _LOGGER.warning("Could not update reports: %s", err)
+                return self.data
+            raise UpdateFailed(f"Could not reach {self.endpoint}: {err}") from err
+
+        decoded = await self.hass.async_add_executor_job(
+            decode_reports, reports, self._key_map
+        )
+        return self._merge_reports(decoded)
+
+    async def _async_fetch(self) -> list[dict[str, Any]]:
+        session = async_get_clientsession(self.hass)
+        async with session.post(
+            self.endpoint,
+            json={"ids": list(self._key_map), "days": self._days},
+            auth=self._auth,
+            timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT),
+        ) as response:
+            response.raise_for_status()
+            body = await response.json(content_type=None)
+        results = body.get("results")
+        return results if isinstance(results, list) else []
